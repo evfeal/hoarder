@@ -1,0 +1,13 @@
+[package]
+name = "hoarder"
+version = "0.1.0"
+authors = ["Evan Alvarez <evanalvarez@tutanota.com>"]
+description = "The all-in-one renaming utility for people with too many files"
+edition = "2021"
+repository = "https://github.com/evfeal/hoarder"
+license = "GPL-3.0"
+license-file = "LICENSE"
+
+[dependencies]
+clap = { version = "4.5.9", features = ["derive"] }
+glob = "0.3.1"
