@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use exif::{Reader, In, Tag};
-use chrono::NaiveDate;
+pub use chrono::NaiveDate;
 use regex::Regex;
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -30,7 +30,7 @@ pub fn process_image(path: &Path) -> Option<PathBuf> {
     date.map(|date| rename(path, &date))
 }
 
-fn get_image_date(path: &Path) -> Option<NaiveDate> {
+pub fn get_image_date(path: &Path) -> Option<NaiveDate> {
     get_exif_date(path).or_else(|| get_fallback_date(path))
 }
 
@@ -58,16 +58,16 @@ fn get_fallback_date(path: &Path) -> Option<NaiveDate> {
 
 fn rename(path: &Path, date: &NaiveDate) -> PathBuf {
     let parent = path.parent().unwrap_or(Path::new(""));
-    let date_str = date.format("%Y%m%d").to_string();
+    let date_str = date.format("%Y-%m-%d").to_string();
     
     let mut counters = COUNTERS.lock().unwrap();
     let count = counters.entry(date_str.clone()).or_insert(0);
     *count += 1;
 
     let new_filename = if *count > 1 {
-        format!("IMG_{}-{:02}.jpg", date_str, count)
+        format!("{}-{:02}.jpg", date_str, count)
     } else {
-        format!("IMG_{}.jpg", date_str)
+        format!("{}.jpg", date_str)
     };
     
     let new_path = parent.join(new_filename);

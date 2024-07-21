@@ -1,5 +1,6 @@
 mod image;
 mod simple;
+mod organize;
 
 use clap::{Arg, Command};
 
@@ -30,13 +31,25 @@ fn main() {
                 .value_name("SUFFIX")
                 .help("Suffix to add to filenames"),
         )
+        .arg(
+            Arg::new("directory")
+                .short('d')
+                .long("directory")
+                .help("Organize files into a directory based structure")
+                .action(clap::ArgAction::SetTrue),
+        )
         .get_matches();
 
     let paths: Vec<&String> = matches.get_many("paths").unwrap().collect();
     let prefix = matches.get_one::<String>("prefix");
     let suffix = matches.get_one::<String>("suffix");
+    let use_directory_structure = matches.get_flag("directory");
 
     for path in paths {
-        simple::rename_files(path, prefix, suffix);
+        if use_directory_structure {
+            organize::organize_files(path);
+        } else {
+            simple::rename_files(path, prefix, suffix);
+        }
     }
 }
