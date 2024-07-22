@@ -18,8 +18,9 @@ The greatest command line utility for data hoarders that has ever been invented
 
 - **Full POSIX Compliance :** Supports all the things you would expect from a unix CLI, including wildcards!
 - **Prefixes, Suffixes, and Replacing:** Add prefixes, suffixes, and replace strings in your files!
-- **Images:** Rename images using exif data and the IMG_YYYYMMDD format!
-- **(WIP) Movies and TV Shows:** im working on it alright, its gonna be great trust me.
+- **Images:** Rename images using exif data and the YYYY-MM-DD format!
+- **(WIP) Movies and TV Shows:** Its soooooo close to being done, one more day!
+- **Directory Mode:** Choose to add files into directories instead of simply renaming them (like YYYY-MM-DD -> YYYY/YYYY-MM-DD)
 
 ## Tech Stack
 
