@@ -25,11 +25,18 @@ The greatest command line utility for data hoarders that has ever been invented
 
 - [Rust](https://www.rust-lang.org/)
   - [lazy_static](https://crates.io/crates/lazy_static)
+  - [chrono](https://crates.io/crates/chrono)
   - [clap](https://crates.io/crates/clap)
   - [glob](https://crates.io/crates/glob)
   - [infer](https://crates.io/crates/infer)
   - [kamadak-exif](https://crates.io/crates/kamadak-exif)
   - [regex](https://crates.io/crates/regex)
+  - [reqwest](https://crates.io/crates/reqwest)
+  - [serde](https://crates.io/crates/serde)
+  - [serde_json](https://crates.io/crates/serde_json)
+  - [url](https://crates.io/crates/url)
+  - [toml](https://crates.io/crates/toml)
+- [TMDB](https://themoviedb.org)
 
 ## Getting Started
 
@@ -39,6 +46,7 @@ Here's what you need to be able to run hoarder:
 
 - Rust compiler
 - Unix-based system (Windows support coming one day)
+- openssl
 - libexif
 
 ### 1. Clone the repository
