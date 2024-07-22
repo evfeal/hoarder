@@ -1,32 +1,14 @@
-mod api_config;
 mod image;
 mod organize;
 mod simple;
-mod video;
 
-use api_config::APIConfig;
+use anyhow::Result;
 use clap::{Arg, Command};
-use std::env;
+use glob::glob;
+use rayon::prelude::*;
+use std::path::{Path, PathBuf};
 
-fn main() {
-    let mut config = APIConfig::load();
-
-    if let Ok(api_key) = env::var("TMDB_API_KEY") {
-        config.tmdb_api_key = Some(api_key);
-    }
-
-    if config.tmdb_api_key.is_none() {
-        println!("Please enter your TMDB API key:");
-        let mut api_key = String::new();
-        std::io::stdin().read_line(&mut api_key).unwrap();
-        config.tmdb_api_key = Some(api_key.trim().to_string());
-        config.save().unwrap();
-    }
-
-    if let Some(api_key) = &config.tmdb_api_key {
-        env::set_var("TMDB_API_KEY", api_key);
-    }
-
+fn main() -> Result<()> {
     let matches = Command::new("Hoarder")
         .version("1.0")
         .author("Evan Alvarez")
@@ -34,7 +16,7 @@ fn main() {
         .arg(
             Arg::new("paths")
                 .value_name("PATH")
-                .help("Path to the file(s) or directories to be renamed")
+                .help("Path(s) to the file(s) or directories to be renamed (supports wildcards)")
                 .required(true)
                 .num_args(1..),
         )
@@ -62,52 +44,63 @@ fn main() {
         )
         .get_matches();
 
-    let paths: Vec<&String> = matches.get_many("paths").unwrap().collect();
+    let path_patterns: Vec<&String> = matches.get_many("paths").unwrap().collect();
     let prefix = matches.get_one::<String>("prefix");
     let suffix = matches.get_one::<String>("suffix");
     let use_directory_structure = matches.get_flag("directory");
 
-    for path in paths {
-        if use_directory_structure {
-            organize::organize_files(path);
-        } else {
-            process_path(path, prefix, suffix);
+    path_patterns.par_iter().for_each(|pattern| {
+        if let Err(e) = process_pattern(pattern, use_directory_structure, prefix, suffix) {
+            eprintln!("Error processing pattern {}: {:?}", pattern, e);
         }
-    }
+    });
+
+    Ok(())
 }
 
-fn process_path(path: &str, prefix: Option<&String>, suffix: Option<&String>) {
-    let path = std::path::Path::new(path);
-    if path.is_dir() {
-        for entry in std::fs::read_dir(path).expect("Failed to read directory") {
-            if let Ok(entry) = entry {
-                let entry_path = entry.path();
-                if entry_path.is_file() {
-                    process_file(&entry_path, prefix, suffix);
-                }
-            }
-        }
-    } else {
-        process_file(path, prefix, suffix);
-    }
-}
-
-fn process_file(path: &std::path::Path, prefix: Option<&String>, suffix: Option<&String>) {
-    if video::is_video(path) {
-        if let Some((title, _release_date)) = video::get_video_metadata(path) {
-            let new_filename = format!("{}.mp4", title);
-            let new_path = path.with_file_name(new_filename);
-            if let Err(e) = std::fs::rename(path, &new_path) {
-                eprintln!("Error renaming video file: {}", e);
+fn process_pattern(
+    pattern: &str,
+    use_directory_structure: bool,
+    prefix: Option<&String>,
+    suffix: Option<&String>,
+) -> Result<()> {
+    glob(pattern)?
+        .par_bridge()
+        .try_for_each(|entry| -> Result<()> {
+            let path = entry?;
+            if use_directory_structure {
+                organize::organize_files(&path)?;
             } else {
-                println!("Renamed video: {:?} to {:?}", path, new_path);
+                process_path(&path, prefix, suffix)?;
             }
-        }
-    } else if image::is_image(path) {
+            Ok(())
+        })
+}
+
+fn process_path(path: &PathBuf, prefix: Option<&String>, suffix: Option<&String>) -> Result<()> {
+    if path.is_dir() {
+        walkdir::WalkDir::new(path)
+            .into_iter()
+            .par_bridge()
+            .try_for_each(|entry| -> Result<()> {
+                let entry = entry?;
+                if entry.file_type().is_file() {
+                    process_file(&entry.path(), prefix, suffix)?;
+                }
+                Ok(())
+            })
+    } else {
+        process_file(path, prefix, suffix)
+    }
+}
+
+fn process_file(path: &Path, prefix: Option<&String>, suffix: Option<&String>) -> Result<()> {
+    if image::is_image(path) {
         if let Some(new_path) = image::process_image(path) {
             println!("Processed image: {:?} to {:?}", path, new_path);
         }
     } else {
-        simple::rename_single_file(path, prefix, suffix);
+        simple::rename_single_file(path, prefix, suffix)?;
     }
+    Ok(())
 }

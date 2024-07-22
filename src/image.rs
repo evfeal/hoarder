@@ -1,15 +1,13 @@
 pub use chrono::NaiveDate;
 use exif::{In, Reader, Tag};
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
-lazy_static! {
-    static ref COUNTERS: Mutex<HashMap<String, usize>> = Mutex::new(HashMap::new());
-}
+static COUNTERS: Lazy<Mutex<HashMap<String, usize>>> = Lazy::new(|| Mutex::new(HashMap::new()));
 
 pub fn is_image(path: &Path) -> bool {
     if let Ok(buf) = std::fs::read(path) {
