@@ -1,12 +1,12 @@
-mod image;
-mod video;
-mod simple;
-mod organize;
 mod api_config;
+mod image;
+mod organize;
+mod simple;
+mod video;
 
+use api_config::APIConfig;
 use clap::{Arg, Command};
 use std::env;
-use api_config::APIConfig;
 
 fn main() {
     let mut config = APIConfig::load();
@@ -62,7 +62,7 @@ fn main() {
         )
         .get_matches();
 
-        let paths: Vec<&String> = matches.get_many("paths").unwrap().collect();
+    let paths: Vec<&String> = matches.get_many("paths").unwrap().collect();
     let prefix = matches.get_one::<String>("prefix");
     let suffix = matches.get_one::<String>("suffix");
     let use_directory_structure = matches.get_flag("directory");
@@ -94,7 +94,7 @@ fn process_path(path: &str, prefix: Option<&String>, suffix: Option<&String>) {
 
 fn process_file(path: &std::path::Path, prefix: Option<&String>, suffix: Option<&String>) {
     if video::is_video(path) {
-        if let Some((title, release_date)) = video::get_video_metadata(path) {
+        if let Some((title, _release_date)) = video::get_video_metadata(path) {
             let new_filename = format!("{}.mp4", title);
             let new_path = path.with_file_name(new_filename);
             if let Err(e) = std::fs::rename(path, &new_path) {

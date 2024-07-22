@@ -1,14 +1,17 @@
-use std::path::Path;
 use chrono::NaiveDate;
-use std::env;
+use regex::Regex;
 use reqwest;
 use serde_json::Value;
-use regex::Regex;
+use std::env;
+use std::path::Path;
 use url::Url;
 
 pub fn is_video(path: &Path) -> bool {
     if let Some(extension) = path.extension() {
-        matches!(extension.to_str().unwrap_or(""), "mp4" | "avi" | "mkv" | "mov" | "webm")
+        matches!(
+            extension.to_str().unwrap_or(""),
+            "mp4" | "avi" | "mkv" | "mov" | "webm"
+        )
     } else {
         false
     }
@@ -23,7 +26,7 @@ pub fn get_video_metadata(path: &Path) -> Option<(String, NaiveDate)> {
             return None;
         }
     };
-    
+
     // Clean up the filename to create a search query
     let query = clean_filename(filename);
 
@@ -34,7 +37,7 @@ pub fn get_video_metadata(path: &Path) -> Option<(String, NaiveDate)> {
 
     let api_url = match Url::parse_with_params(
         "https://api.themoviedb.org/3/search/movie",
-        &[("api_key", api_key.as_str()), ("query", &query)]
+        &[("api_key", api_key.as_str()), ("query", &query)],
     ) {
         Ok(url) => url,
         Err(e) => {
@@ -97,12 +100,13 @@ fn clean_filename(filename: &str) -> String {
     // Remove quality indicators and other common tags
     let re = Regex::new(r"\[[^\]]*\]|\([^\)]*\)|480p|720p|1080p|2160p|4K|UHD|HDR|x264|x265|HEVC|BluRay|WEB-DL|WEBRip").unwrap();
     let cleaned = re.replace_all(name, "");
-    
+
     // Replace dots and underscores with spaces, trim, and remove multiple spaces
-    cleaned.replace('.', " ")
-           .replace('_', " ")
-           .trim()
-           .split_whitespace()
-           .collect::<Vec<&str>>()
-           .join(" ")
+    cleaned
+        .replace('.', " ")
+        .replace('_', " ")
+        .trim()
+        .split_whitespace()
+        .collect::<Vec<&str>>()
+        .join(" ")
 }

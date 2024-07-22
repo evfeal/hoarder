@@ -1,10 +1,10 @@
-use std::path::{Path, PathBuf};
-use std::fs;
-use chrono::NaiveDate;
-use std::collections::HashMap;
-use std::sync::Mutex;
-use lazy_static::lazy_static;
 use crate::{image, video};
+use chrono::NaiveDate;
+use lazy_static::lazy_static;
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 
 lazy_static! {
     static ref COUNTERS: Mutex<HashMap<String, usize>> = Mutex::new(HashMap::new());
@@ -61,31 +61,38 @@ fn organize_video(path: &Path) {
 
 fn create_new_path(path: &Path, date: &NaiveDate) -> PathBuf {
     let parent = path.parent().unwrap_or(Path::new(""));
-    let date_str = date.format("%Y%m%d").to_string();
-    
+    let date_str = date.format("%Y-%m-%d").to_string();
+
     let mut counters = COUNTERS.lock().unwrap();
     let count = counters.entry(date_str.clone()).or_insert(0);
     *count += 1;
 
     let new_filename = if *count > 1 {
-        format!("IMG_{}-{:02}.jpg", date_str, count)
+        format!("{}-{:02}.jpg", date_str, count)
     } else {
-        format!("IMG_{}.jpg", date_str)
+        format!("{}.jpg", date_str)
     };
-    
+
     parent.join(new_filename)
 }
 
 fn create_new_video_path(path: &Path, title: &str, date: &NaiveDate) -> PathBuf {
-    let year_dir = path.parent().unwrap_or(Path::new("")).join(date.format("%Y").to_string());
+    let year_dir = path
+        .parent()
+        .unwrap_or(Path::new(""))
+        .join(date.format("%Y").to_string());
     fs::create_dir_all(&year_dir).unwrap_or_else(|e| eprintln!("Error creating directory: {}", e));
 
-    let formatted_title = title.replace(' ', ".")
-                               .replace(|c: char| !c.is_alphanumeric() && c != '.', "");
+    let formatted_title = title
+        .replace(' ', ".")
+        .replace(|c: char| !c.is_alphanumeric() && c != '.', "");
     let safe_title = format!("{}.({})", formatted_title, date.format("%Y"));
 
-    let extension = path.extension().and_then(|ext| ext.to_str()).unwrap_or("mp4");
-    
+    let extension = path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("mp4");
+
     let movie_folder = year_dir.join(&safe_title);
     let new_filename = format!("{}.{}", safe_title, extension);
 
@@ -94,7 +101,8 @@ fn create_new_video_path(path: &Path, title: &str, date: &NaiveDate) -> PathBuf 
 
 fn create_movie_folder(new_path: &Path) {
     if let Some(parent) = new_path.parent() {
-        fs::create_dir_all(parent).unwrap_or_else(|e| eprintln!("Error creating movie folder: {}", e));
+        fs::create_dir_all(parent)
+            .unwrap_or_else(|e| eprintln!("Error creating movie folder: {}", e));
     }
 }
 

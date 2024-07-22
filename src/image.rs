@@ -1,11 +1,11 @@
-use std::path::{Path, PathBuf};
-use std::fs::File;
-use exif::{Reader, In, Tag};
 pub use chrono::NaiveDate;
+use exif::{In, Reader, Tag};
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use lazy_static::lazy_static;
 
 lazy_static! {
     static ref COUNTERS: Mutex<HashMap<String, usize>> = Mutex::new(HashMap::new());
@@ -26,7 +26,7 @@ pub fn process_image(path: &Path) -> Option<PathBuf> {
     }
 
     let date = get_image_date(path);
-    
+
     date.map(|date| rename(path, &date))
 }
 
@@ -42,14 +42,14 @@ fn get_exif_date(path: &Path) -> Option<NaiveDate> {
 
     let date_time = exif.get_field(Tag::DateTimeOriginal, In::PRIMARY)?;
     let date_str = date_time.value.display_as(date_time.tag).to_string();
-    
+
     NaiveDate::parse_from_str(&date_str, "%Y-%m-%d %H:%M:%S").ok()
 }
 
 fn get_fallback_date(path: &Path) -> Option<NaiveDate> {
     let filename = path.file_name()?.to_str()?;
     let re = Regex::new(r"(\d{4})(\d{2})(\d{2})").ok()?;
-    
+
     re.find(filename).and_then(|m| {
         let date_str = m.as_str();
         NaiveDate::parse_from_str(date_str, "%Y%m%d").ok()
@@ -59,7 +59,7 @@ fn get_fallback_date(path: &Path) -> Option<NaiveDate> {
 fn rename(path: &Path, date: &NaiveDate) -> PathBuf {
     let parent = path.parent().unwrap_or(Path::new(""));
     let date_str = date.format("%Y-%m-%d").to_string();
-    
+
     let mut counters = COUNTERS.lock().unwrap();
     let count = counters.entry(date_str.clone()).or_insert(0);
     *count += 1;
@@ -69,7 +69,7 @@ fn rename(path: &Path, date: &NaiveDate) -> PathBuf {
     } else {
         format!("{}.jpg", date_str)
     };
-    
+
     let new_path = parent.join(new_filename);
 
     if let Err(e) = std::fs::rename(path, &new_path) {

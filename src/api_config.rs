@@ -1,5 +1,5 @@
-use std::fs;
 use serde::{Deserialize, Serialize};
+use std::fs;
 
 #[derive(Deserialize, Serialize)]
 pub struct APIConfig {
@@ -23,8 +23,6 @@ impl APIConfig {
 
 impl Default for APIConfig {
     fn default() -> Self {
-        APIConfig {
-            tmdb_api_key: None,
-        }
+        APIConfig { tmdb_api_key: None }
     }
 }
